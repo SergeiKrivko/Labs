@@ -18,7 +18,7 @@ class Basis:
             self.matrix = Matrix(
                 [list(vector.to_primal_basis().coordinates) for vector in self.vectors]).transpose()
             # self.convert_matrix = self.matrix ** -1
-        self.s_mul = lambda v1, v2: sum(v1[k] * v2[k] for k in range(self.n))
+        self.s_mul = lambda v1, v2: sum(v1.coordinates[k] * v2.coordinates[k] for k in range(self.n))
 
     def __str__(self):
         return str(self.matrix)
