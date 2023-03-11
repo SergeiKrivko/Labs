@@ -95,7 +95,7 @@ def der(func, var='x'):
 
 
 def main():
-    print(derivative(derivative('m.sin(m.cos(-x - 18) ** 2)')))
+    print(der(derivative('m.sin(x**2)')))
 
 
 if __name__ == '__main__':

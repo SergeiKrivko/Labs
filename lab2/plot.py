@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -9,7 +9,7 @@ class Plot(QWidget):
         super(Plot, self).__init__(parent)
 
         self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
+        self.canvas = FigureCanvasQTAgg(self.figure)
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
         self.setLayout(layout)

@@ -1,11 +1,33 @@
-from PyQt5.QtWidgets import QWidget, QScrollArea, QHBoxLayout, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QScrollArea, QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 
-class TableWidget(QWidget):
+class TableWidget(QTableWidget):
     def __init__(self, parent):
         super(TableWidget, self).__init__(parent)
+        self.setColumnCount(5)
+        self.setRowCount(0)
+
+        self.setHorizontalHeaderLabels(["[a, b]", "x", "y", "iter", "error"])
+
+    def add_row(self, *args):
+        row = self.rowCount()
+        self.setRowCount(row + 1)
+        self.setVerticalHeaderItem(row, QTableWidgetItem(str(row + 1)))
+        for i in range(5):
+            item = QTableWidgetItem(args[i])
+            item.setFlags(Qt.ItemIsEnabled)
+            self.setItem(row, i, item)
+
+    def clear(self):
+        for i in range(self.rowCount()):
+            self.removeRow(0)
+
+
+class TableWidget2(QWidget):
+    def __init__(self, parent):
+        super(TableWidget2, self).__init__(parent)
 
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setFixedSize(600, 280)
@@ -16,7 +38,7 @@ class TableWidget(QWidget):
         self.widget = QWidget(self)
 
         for i in range(100):
-            self.layout.addWidget(TableRow(self, i, 2/5, 3/7, 4/3, 5e-45 / 7, 6, 7))
+            self.layout.addWidget(TableRow(self, i, 2 / 5, 3 / 7, 4 / 3, 5e-45 / 7, 6, 7))
 
         self.widget.setFixedHeight(36 * 100)
         self.widget.setLayout(self.layout)
