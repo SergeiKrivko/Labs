@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QMainWindow
-from plot import Plot
-from table import TableWidget
-from input_widget import InputWidget
-from root_refirement import find_roots
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from lab2.plot import Plot
+from lab2.table import TableWidget
+from lab2.input_widget import InputWidget
+from lab2.root_refirement import find_roots
 import math
-from derivative import der
+from lab2.derivative import der
 
 
 class MainWindow(QMainWindow):
@@ -28,27 +28,43 @@ class MainWindow(QMainWindow):
         self.plot.clear()
         func_str, a, b, h, eps, max_iter = args
         func = eval('lambda x: ' + func_str, {'math': math, 'm': math})
-        der1 = eval('lambda x: ' + der(func_str), {'math': math, 'm': math})
-        der2 = eval('lambda x: ' + der(der(func_str)), {'math': math, 'm': math})
-        der3 = eval('lambda x: ' + der(der(der(func_str))), {'math': math, 'm': math})
-        self.plot.draw_func(func, a, b)
-        self.table.clear()
-        for a_b, data in find_roots(func, der1, a, b, eps, h, max_iter):
-            if data[-1] == 0:
-                self.table.add_row(f"[{a_b[0]}, {a_b[1]}]", *map(format_number, data))
-            elif data[-1] != -1:
-                self.table.add_row(f"[{a_b[0]}, {a_b[1]}]", *map(format_number, data))
+        try:
+            der1 = eval('lambda x: ' + der(func_str), {'math': math, 'm': math})
+        except Exception as ex:
+            QMessageBox.warning(self, 'Ошибка', f'Не удалось найти производную:\n{ex.__class__.__name__}: {ex}')
+        else:
+            self.plot.draw_func(func, a, b)
+            self.table.clear()
+            for a_b, data in find_roots(func, der1, a, b, eps, h, max_iter):
+                if data[-1] != -1:
+                    self.table.add_row(f"[{a_b[0]}, {a_b[1]}]", *format_numbers(data))
 
-        lst = []
-        for _, el in find_roots(der2, der3, a, b, eps, h, max_iter):
-            if el[0] is not None:
-                lst.append(el[0])
-        self.plot.draw_points(lst, list(map(func, lst)))
+            try:
+                der2 = eval('lambda x: ' + der(der(func_str)), {'math': math, 'm': math})
+                der3 = eval('lambda x: ' + der(der(der(func_str))), {'math': math, 'm': math})
+            except Exception as ex:
+                QMessageBox.warning(self, 'Ошибка', f'Не удалось найти производную:\n{ex.__class__.__name__}: {ex}')
+            else:
+                lst = []
+                for _, el in find_roots(der2, der3, a, b, eps, h, max_iter):
+                    if el[0] is not None:
+                        lst.append(el[0])
+                self.plot.draw_points(lst, list(map(func, lst)))
 
 
-def format_number(n):
-    if n is None:
-        return ""
-    if isinstance(n, float):
-        return '{:6g}'.format(n)
-    return str(n)
+def format_numbers(lst):
+    res = []
+    if lst[0] is not None:
+        res.append('{:6g}'.format(lst[0]))
+    else:
+        res.append('')
+    if lst[1] is not None:
+        res.append('{:1g}'.format(lst[1]))
+    else:
+        res.append('')
+    if lst[2] is not None:
+        res.append(str(lst[2]))
+    else:
+        res.append('')
+    res.append(str(lst[3]))
+    return res

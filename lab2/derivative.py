@@ -41,7 +41,8 @@ std_der = [('m.sin', 'm.cos({})'),
            ('m.log', '1/{}'),
            ('m.log10', '1/{}*m.log(10)'),
            ('m.log2', '1/{}*m.log(2)'),
-           ('m.exp', 'm.exp({})')]
+           ('m.exp', 'm.exp({})'),
+           ('-', '-{}')]
 
 
 def derivative(func, var='x'):
@@ -53,7 +54,7 @@ def derivative(func, var='x'):
     if func == var or func == f'({var})':
         return '1'
 
-    if func == '-' + var or func == f'-({var})':
+    if func == '-' + var:
         return '-1'
 
     tpl1 = split_by_pluses_and_minuses(func)
@@ -90,7 +91,7 @@ def derivative(func, var='x'):
     if func[0] == '(' and func[-1] == ')':
         return derivative(func[1:-1], var)
 
-    print('ERROR', func)
+    raise ValueError('invalid function: ' + func)
 
 
 def der(func, var='x'):
@@ -106,7 +107,7 @@ def is_float(n):
 
 
 def main():
-    print(der('3**x * 10'))
+    print(der('x / x '))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QVBoxLayout, QWidget, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +26,7 @@ class Plot(QWidget):
             self.ax.plot(x, y)
             self.canvas.draw()
         except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+            QMessageBox.warning(self, 'Ошибка', f'Ошибка при построении функции:\n{ex.__class__.__name__}: {ex}')
 
     def draw_points(self, x, y):
         self.ax.scatter(x, y)

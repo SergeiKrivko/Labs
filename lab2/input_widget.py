@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QVBoxLayout, QDoubleSpinBox, QLabel, QPushButton, QSpinBox
+from PyQt5.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QVBoxLayout, QDoubleSpinBox, QLabel, QPushButton, \
+    QSpinBox, QMessageBox
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import pyqtSignal
 import math
@@ -119,19 +120,16 @@ class InputWidget(QWidget):
         self.button = QPushButton("Построить", self)
         self.button.setFixedSize(200, 50)
         self.button.setFont(QFont('Arial', 20))
-        self.button.clicked.connect(self.done)
+        self.button.clicked.connect(self.do)
         self.layout.addWidget(self.button)
 
         self.setLayout(self.layout)
 
-    def done(self, *args):
+    def do(self, *args):
         try:
-            func = eval('lambda x: ' + self.function_line.text(), {'math': math, 'm': math})
             eps = float(self.eps_box.text())
         except ValueError:
-            print("Invalid eps")
-        except Exception as ex:
-            print(f'Invalid function:\n{ex.__class__.__name__}: {ex}')
+            QMessageBox.warning(self, '', 'Invalid epsilon')
         else:
             self.drawFunc.emit(self.function_line.text(), self.start_box.value(), self.stop_box.value(),
                                self.step_box.value(), eps, self.iter_box.value())

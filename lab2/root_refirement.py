@@ -26,30 +26,32 @@ def binary_search_method(function, a, b, eps, max_iter_count=inf):
 
 def simple_iteration_method(func, der, a, b, eps, max_iter):
     try:
+        if func(a) * func(b) > 0:
+            return None, None, 0, -1
         q = 1 / der(a)
         x = a
         f = func(x)
     except ZeroDivisionError:
-        return None, None, None, 2
+        return None, None, 0, 2
     except Exception:
-        return None, None, None, 3
+        return None, None, 0, 3
 
     iters = 0
     while True:
         iters += 1
         x = x - q * f
         if x < a or x > b:
-            return None, None, None, -1
+            return None, None, iters, -1
         if iters >= max_iter:
-            return None, None, None, 1
+            return None, None, iters, 1
         try:
             f = func(x)
         except ZeroDivisionError:
-            return None, None, None, 2
+            return None, None, iters, 2
         except Exception:
-            return None, None, None, 3
+            return None, None, iters, 3
 
-        if abs(f) < eps:
+        if abs(f) < eps or abs(q * f) < eps:
             return x, f, iters, 0
 
 
