@@ -1,6 +1,13 @@
 from math import inf
 import math
 
+ERRORS_INFO = {'0': 'Корень найден успешно',
+               '1': 'Перевышение максимального количества итераций',
+               '2': 'Деление на ноль',
+               '3': 'Другая ошибка пр и вычислении значения функции',
+               '4': '',
+               '5': ''}
+
 
 def binary_search_method(function, a, b, eps, max_iter_count=inf):
     if function(a) * function(b) > 0:
@@ -32,7 +39,7 @@ def simple_iteration_method(func, der, a, b, eps, max_iter):
         iters += 1
         x = x - q * f
         if x < a or x > b:
-            return None, None, None, 0
+            return None, None, None, -1
         if iters >= max_iter:
             return None, None, None, 1
         try:
@@ -43,7 +50,7 @@ def simple_iteration_method(func, der, a, b, eps, max_iter):
             return None, None, None, 3
 
         if abs(f) < eps:
-            return x, f, iters, None
+            return x, f, iters, 0
 
 
 def find_roots(func, der, a, b, eps, h, max_iter):
@@ -66,4 +73,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

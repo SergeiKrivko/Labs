@@ -23,6 +23,9 @@ class Basis:
     def __str__(self):
         return str(self.matrix)
 
+    def __getitem__(self, item):
+        return self.vectors[item]
+
     def set_s_mul(self, func):
         self.s_mul = func
 
@@ -69,6 +72,9 @@ class Vector:
     def __neg__(self):
         return Vector(*(c * -1 for c in self.coordinates))
 
+    def __getitem__(self, item):
+        return self.coordinates[item]
+
     def __bool__(self):
         for c in self.coordinates:
             if c:
@@ -96,6 +102,12 @@ class Vector:
             res += ', ' + str(self.coordinates[i])
         return res + '}'
 
+    def __abs__(self):
+        return (self * self) ** 0.5
+
+    def __len__(self):
+        return abs(self)
+
     def matrix(self):
         return Matrix([list(self.coordinates)]).transpose()
 
@@ -111,3 +123,32 @@ class Vector:
 
     def proj(self, vector):
         return vector * (self * vector / (vector * vector))
+
+    def __iter__(self):
+        return iter(self.coordinates)
+
+
+class LinealOperator:
+    def __init__(self, *args, name='a'):
+        if len(args) == 1 and isinstance(args[0], str) and ',' in args[0]:
+            args = args[0].split(',')
+        self.n = len(args)
+        self.name = name
+        vectors = [[0] * self.n for _ in range(self.n)]
+        for i in range(len(vectors)):
+            vectors[i][i] = 1
+            vectors[i] = Vector(*vectors[i])
+        self.str_operations = args
+        self.operations = list(map(eval, (
+            f"lambda {','.join(name + str(i + 1) for i in range(self.n))}: {args[j]}" for j in range(self.n))))
+        self.matrix = Matrix([list(self.convert(v)) for v in vectors]).transpose()
+
+    def convert(self, other):
+        return Vector(*(func(*other) for func in self.operations))
+
+    def __str__(self):
+        return str(self.matrix)
+
+    def __call__(self, *args, **kwargs):
+        return self.convert(*args, **kwargs)
+

@@ -44,6 +44,18 @@ class Matrix:
             s += '\n'
         return s + '\b\b\b'
 
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.mtrx[item]
+        if len(item) == 2:
+            return self.mtrx[item[0]][item[1]]
+        raise IndexError('Invalid index')
+
+    def __iter__(self):
+        for i in range(self.size_n):
+            for j in range(self.size_m):
+                yield self.mtrx[i][j]
+
     def transpose(self):
         """Транспонирует квадратную матрицу"""
         if self.size_n == self.size_m:

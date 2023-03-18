@@ -48,15 +48,12 @@ def derivative(func, var='x'):
     func = func.replace(' ', '')
     func = func.replace('**', '^')
     func = func.replace('math', 'm')
-    try:
-        float(func)
+    if is_float(func):
         return '0'
-    except Exception:
-        pass
-    if func == var:
+    if func == var or func == f'({var})':
         return '1'
 
-    if func == '-' + var:
+    if func == '-' + var or func == f'-({var})':
         return '-1'
 
     tpl1 = split_by_pluses_and_minuses(func)
@@ -65,24 +62,30 @@ def derivative(func, var='x'):
 
     tpl2 = split(tpl1[0], '*')
     if len(tpl2) == 2:
-        return '(' + derivative(tpl2[0]) + '*' + tpl2[1] + '+' + tpl2[0] + '*' + derivative(tpl2[1]) + ')'
+        return '(' + derivative(tpl2[0], var) + '*' + tpl2[1] + '+' + tpl2[0] + '*' + derivative(tpl2[1], var) + ')'
 
     tpl3 = split(tpl2[0], '/')
     if len(tpl3) == 2:
-        return '(' + derivative(tpl3[0]) + '*' + tpl3[1] + '-' + tpl3[0] + '*' + derivative(tpl3[1]) + ')/(' \
+        return '(' + derivative(tpl3[0], var) + '*' + tpl3[1] + '-' + tpl3[0] + '*' + derivative(tpl3[1], var) + ')/(' \
                + tpl3[1] + '^2)'
 
     tpl4 = split(tpl3[0], '^')
     if len(tpl4) == 2:
-        return tpl4[1] + '*' + tpl4[0] + '^' + str(float(tpl4[1]) - 1) + '*' + derivative(tpl4[0])
+        if is_float(tpl4[0]) and not is_float(tpl4[1]):
+            print(f'{tpl3[0]}*m.log({float(tpl4[0])})*{derivative(tpl4[1], var)}')
+            return f'{tpl3[0]}*m.log({float(tpl4[0])})*{derivative(tpl4[1], var)}'
+        elif not is_float(tpl4[0]) and is_float(tpl4[1]):
+            return tpl4[1] + '*' + tpl4[0] + '^' + str(float(tpl4[1]) - 1) + '*' + derivative(tpl4[0], var)
+        else:
+            return tpl3[0]
 
     for f, d in std_der:
         if tpl4[0][:len(f)] == f and tpl4[0][len(f)] == '(' and tpl4[0][-1] == ')':
-            return d.format(tpl4[0][len(f):]) + '*' + derivative(tpl4[0][len(f) + 1:-1])
+            return d.format(tpl4[0][len(f):]) + '*' + derivative(tpl4[0][len(f) + 1:-1], var)
 
     for f, d in std_der:
         if tpl4[0][:len(f) + 1] == '-' + f and tpl4[0][len(f) + 1] == '(' and tpl4[0][-1] == ')':
-            return '-' + d.format(tpl4[0][len(f) + 1:]) + '*' + derivative(tpl4[0][len(f) + 2:-1])
+            return '-' + d.format(tpl4[0][len(f) + 1:]) + '*' + derivative(tpl4[0][len(f) + 2:-1], var)
 
     if func[0] == '(' and func[-1] == ')':
         return derivative(func[1:-1], var)
@@ -94,8 +97,16 @@ def der(func, var='x'):
     return derivative(func, var).replace('^', '**')
 
 
+def is_float(n):
+    try:
+        float(n)
+        return True
+    except ValueError:
+        return False
+
+
 def main():
-    print(der(derivative('m.sin(x**2)')))
+    print(der('3**x * 10'))
 
 
 if __name__ == '__main__':

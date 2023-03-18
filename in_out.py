@@ -1,15 +1,24 @@
-'''
+"""
 Модуль, содержащий функции для ввода и вывода различных данных
-'''
+"""
+
 
 class NegativeValueError(Exception):
     pass
 
-def input_value(prompt='', function=int, only_positive=False):
-    '''Ввод числового значения'''
+
+def input_value(prompt='', function=int, only_positive=False, input_func=input):
+    """
+    Ввод числового значения
+    :param prompt: приглашение к вводу
+    :param function: функция для преобразования строки
+    :param only_positive: проверка на неотрицательность
+    :param input_func: функция для ввода (в случае ввода не из консоли)
+    :return: None
+    """
     while True:
         try:
-            value = function(input(prompt + ': '))
+            value = function(input_func(prompt + ': '))
             if only_positive and value <= 0:
                 raise NegativeValueError
             return value
@@ -25,7 +34,13 @@ def input_value(prompt='', function=int, only_positive=False):
 
 
 def input_array(function=int, size=0, name='\b'):
-    '''Ввод массива'''
+    """
+    Ввод массива
+    :param function: функция для преобразования к числам
+    :param size: размер массива. По умолчанию вводится с клавиатуры
+    :param name: имя массива
+    :return: None
+    """
     if size == 0:
         size = input_value('Введите длину массива {0}'.format((name)), int, only_positive=True)
     array = [0] * size
@@ -34,23 +49,35 @@ def input_array(function=int, size=0, name='\b'):
     return array
 
 
-def input_matrix(function=int, height=0, widht=0,  square=False, name='\b'):
-    '''Ввод матрицы'''
+def input_matrix(function=int, height=0, widht=0, square=False, name='\b', input_func=input):
+    """
+    Ввод матрицы
+    :param function: функция для преобразования к числам
+    :param height: кол-во строк в матрице (по умолчанию вводится с клваиатуры)
+    :param widht: кол-во столбцов в матрице (по умолчанию вводится с клваиатуры)
+    :param square: квадратная матрица
+    :param name: имя матрицы
+    :param input_func: функция для ввода (в случае ввода не из консоли)
+    :return: None
+    """
     if square:
         if height == 0:
-            height = input_value('Введите размер квадратной матрицы {0}'.format(name), int, only_positive=True)
+            height = input_value('Введите размер квадратной матрицы {0}'.format(name), int, only_positive=True,
+                                 input_func=input_func)
         widht = height
     else:
         if height == 0:
-            height = input_value('Введите кол-во строк матрицы {0}'.format((name)), int, only_positive=True)
+            height = input_value('Введите кол-во строк матрицы {0}'.format((name)), int, only_positive=True,
+                                 input_func=input_func)
         if widht == 0:
-            widht = input_value('Введите кол-во столбцов матрицы {0}'.format(name), int, only_positive=True)
+            widht = input_value('Введите кол-во столбцов матрицы {0}'.format(name), int, only_positive=True,
+                                input_func=input_func)
     matrix = [[0] * widht for i in range(height)]
     for i in range(height):
         for j in range(widht):
-            matrix[i][j] = input_value('Введите элемент [{0}][{1}] матрицы {2}'.format(i + 1, j + 1, name), function)
+            matrix[i][j] = input_value('Введите элемент [{0}][{1}] матрицы {2}'.format(i + 1, j + 1, name), function,
+                                       input_func=input_func)
     return matrix
-
 
 
 def print_matrix(matrix, widht=0, name='Матрица'):
@@ -107,7 +134,6 @@ def print_array_in_column(array, name=''):
                 print('{:<7.6g}'.format(array[i]))
             except Exception:
                 print('{:<7}'.format(array[i]))
-
 
 
 def min_width(x, sep):

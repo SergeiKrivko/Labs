@@ -22,9 +22,10 @@ class MainWindow(QMainWindow):
         self.table = TableWidget(self)
         self.table.setGeometry(340, 340, 600, 280)
 
-        self.input_widget.drawFunc.connect(self.done)
+        self.input_widget.drawFunc.connect(self.do)
 
-    def done(self, *args):
+    def do(self, *args):
+        self.plot.clear()
         func_str, a, b, h, eps, max_iter = args
         func = eval('lambda x: ' + func_str, {'math': math, 'm': math})
         der1 = eval('lambda x: ' + der(func_str), {'math': math, 'm': math})
@@ -33,11 +34,16 @@ class MainWindow(QMainWindow):
         self.plot.draw_func(func, a, b)
         self.table.clear()
         for a_b, data in find_roots(func, der1, a, b, eps, h, max_iter):
-            if data[-1] != 0:
+            if data[-1] == 0:
+                self.table.add_row(f"[{a_b[0]}, {a_b[1]}]", *map(format_number, data))
+            elif data[-1] != -1:
                 self.table.add_row(f"[{a_b[0]}, {a_b[1]}]", *map(format_number, data))
 
+        lst = []
         for _, el in find_roots(der2, der3, a, b, eps, h, max_iter):
-            print(el)
+            if el[0] is not None:
+                lst.append(el[0])
+        self.plot.draw_points(lst, list(map(func, lst)))
 
 
 def format_number(n):
@@ -46,4 +52,3 @@ def format_number(n):
     if isinstance(n, float):
         return '{:6g}'.format(n)
     return str(n)
-

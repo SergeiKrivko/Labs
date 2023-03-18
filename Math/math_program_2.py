@@ -5,8 +5,10 @@ import slae
 import angem
 import linal
 import math
+import json
+from Math.function import MathFunction
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QLineEdit, QTextEdit, QAction, QWidget, QPushButton, QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QLineEdit, QTextEdit, QAction, QWidget, QPushButton, QGridLayout, QFileDialog
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
@@ -58,7 +60,8 @@ variables = {'det': Matrix.determinant, 'opp': Matrix.opposite, 'tr': tr, 'rank'
              'imatrix': input_matrix_of_int, 'fmatrix': input_matrix_of_float, 'frmatrix': input_matrix_of_fractions,
              'slae': command_slae, 'angem': angem, 'ag': angem, 'vector': linal.Vector, 'basis': linal.Basis,
              'polynom': polynom.Polynom, 'monomial': polynom.Monomial, 'circle': angem.Circle, 'sphere': angem.Sphere,
-             'matrix': Matrix, 'math': math, 'm': math, 'lin_op': linal.LinealOperator}
+             'matrix': Matrix, 'math': math, 'm': math, 'lin_op': linal.LinealOperator, "fraction": Fraction,
+             'func': MathFunction, 'function': MathFunction}
 
 
 class MainWindow(QMainWindow):
@@ -81,13 +84,15 @@ class MainWindow(QMainWindow):
         self.text_edit.setFont(font)
         self.text_edit.setReadOnly(True)
 
+        self.file_dialog = QFileDialog(self)
+
         self.menu = MenuBar(
             {
                 "File":
                     {
                         "Save": (lambda: print("save"), "Ctrl+S"),
-                        "Open": (lambda: print("open"), "Ctrl+Alt+Y"),
-                        "Save as": (lambda: print("save as"), "Ctrl+Shift+S")
+                        "Open": (self.open, "Ctrl+Alt+Y"),
+                        "Save as": (lambda: self.save(), "Ctrl+Shift+S")
                     }})
 
         self.setMenuBar(self.menu)
@@ -153,6 +158,21 @@ class MainWindow(QMainWindow):
         except Exception as ex:
             self.print(f'{ex.__class__.__name__}: {ex}')
 
+    def save(self):
+        path = self.file_dialog.getSaveFileName()[0]
+        dct = dict()
+        for key, item in variables.items():
+            src = serialize_obj(item)
+            if src is not None:
+                dct[key] = src
+        serialize(dct, path)
+
+    def open(self):
+        path = self.file_dialog.getOpenFileName()[0]
+        dct = deserialize(path)
+        for key, item in dct.items():
+            variables[key] = eval(item, variables)
+
 
 class MenuBar(QMenuBar):
     def __init__(self, menu_dict):
@@ -205,7 +225,26 @@ def serialize_obj(obj):
     if isinstance(obj, Matrix):
         return f"matrix({str(obj.mtrx)})"
     if isinstance(obj, linal.Vector):
-        return f"vector({','.join(obj.coordinates)},basis={1})"
+        return f"vector({','.join(map(serialize_obj, obj.coordinates))},basis={serialize_obj(obj.basis)})"
+    if isinstance(obj, linal.Basis):
+        return f"basis({','.join(map(serialize_obj, obj.vectors))})"
+    if isinstance(obj, linal.LinealOperator):
+        return f"lin_op({','.join(obj.str_operations)})"
+    if isinstance(obj, MathFunction):
+        return f"func('{obj}', var='{obj.var}')"
+    if isinstance(obj, Fraction):
+        return f"fraction({obj.numerator},{obj.denominator})"
+    if isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, str) or obj is None:
+        return str(obj)
+
+
+def serialize(data, path='history.txt'):
+    hist = json.dumps(data)
+    print(hist, file=open(path, 'w', encoding='utf-8'), end='')
+
+
+def deserialize(path='history.txt'):
+    return json.loads(open(path, encoding='utf-8').read())
 
 
 def main():
