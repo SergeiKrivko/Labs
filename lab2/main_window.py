@@ -55,11 +55,11 @@ class MainWindow(QMainWindow):
 def format_numbers(lst):
     res = []
     if lst[0] is not None:
-        res.append('{:6g}'.format(lst[0]))
+        res.append('{:.6g}'.format(lst[0]))
     else:
         res.append('')
     if lst[1] is not None:
-        res.append('{:1g}'.format(lst[1]))
+        res.append('{:.1g}'.format(lst[1]))
     else:
         res.append('')
     if lst[2] is not None:
