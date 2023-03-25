@@ -1,13 +1,15 @@
 import os
 
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QListWidget, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, QMessageBox, \
     QListWidgetItem
-
 from options_window import OptionsWidget
 
 
 class TestingWidget(QWidget):
+    testing_signal = pyqtSignal(list)
+
     def __init__(self, settings):
         super(TestingWidget, self).__init__()
         self.settings = settings
@@ -100,6 +102,10 @@ class TestingWidget(QWidget):
         self.prog_out.setText((test_data[3]))
 
     def testing(self):
+        if self.isHidden():
+            self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                f"{self.settings['task']:0>2}_" \
+                                                f"{self.settings['var']:0>2}"
         self.tests.clear()
         self.tests_list.clear()
         try:
@@ -114,7 +120,7 @@ class TestingWidget(QWidget):
             self.tests.append((comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt", f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
-                               read_file(f"{self.path}/temp.txt")))
+                               read_file(f"{self.path}/temp.txt"), f"pos{i}"))
             if self.tests[-1][0]:
                 item = QListWidgetItem(f"pos{i} \tPASSED")
             else:
@@ -128,13 +134,14 @@ class TestingWidget(QWidget):
             self.tests.append((comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt", f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
-                               read_file(f"{self.path}/temp.txt")))
+                               read_file(f"{self.path}/temp.txt"), f"neg{i}"))
             if self.tests[-1][0]:
                 item = QListWidgetItem(f"neg{i} \tPASSED")
             else:
                 item = QListWidgetItem(f"neg{i} \tFAILED")
             self.tests_list.addItem(item)
             i += 1
+        self.testing_signal.emit(self.tests)
 
     def show(self) -> None:
         self.update_options()

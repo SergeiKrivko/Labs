@@ -3,7 +3,6 @@ from PyQt5.QtGui import QFont
 from options_window import OptionsWidget
 from test_table_widget import TestTableWidget
 from test_edit_widget import TestEditWidget
-import json
 import os
 
 

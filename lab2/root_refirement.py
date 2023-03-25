@@ -12,7 +12,7 @@ def binary_search_method(function, a, b, eps):
     if function(a) * function(b) > 0:
         raise ValueError("На отрезке нат корня")
     x = (a + b) / 2
-    while abs(function(x)) >= eps or (a + b) < eps:
+    while abs(function(x)) >= eps and abs(a - b) > eps:
         if function(a) * function(x) > 0:
             a = x
         else:

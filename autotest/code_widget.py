@@ -1,11 +1,13 @@
 import os
-
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem
 from options_window import OptionsWidget
 
 
 class CodeWidget(QWidget):
+    testing_signal = pyqtSignal()
+
     def __init__(self, settings):
         super(CodeWidget, self).__init__()
         self.settings = settings
@@ -16,16 +18,17 @@ class CodeWidget(QWidget):
         layout.addLayout(layout_left)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
-                            'name': OptionsWidget.NAME_LEFT},
-            'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
-                               'name': OptionsWidget.NAME_LEFT},
-            'Номер варианта:': {'type': int, 'min': 0, 'initial': self.settings.get('var', 0),
-                                'name': OptionsWidget.NAME_LEFT},
+            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1)},
+            'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1)},
+            'Номер варианта:': {'type': int, 'min': 0, 'initial': self.settings.get('var', 0)},
             'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
         })
-        # self.options_widget.clicked.connect(self.option_changed)
+        self.options_widget.clicked.connect(self.option_changed)
         layout_left.addWidget(self.options_widget)
+
+        self.test_res_widget = QListWidget()
+        self.test_res_widget.setMaximumWidth(225)
+        layout_left.addWidget(self.test_res_widget)
 
         self.code_edit = QTextEdit()
         self.code_edit.setFont(QFont("Courier", 10))
@@ -45,6 +48,9 @@ class CodeWidget(QWidget):
         elif key == 'Номер варианта:':
             self.settings['var'] = self.options_widget["Номер варианта:"]
             self.open_code()
+        elif key == 'Тестировать':
+            self.save_code()
+            self.testing_signal.emit()
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
@@ -71,6 +77,11 @@ class CodeWidget(QWidget):
             file = open(f"{self.path}/main.c", 'w', encoding='utf=8')
             file.write(code)
             file.close()
+
+    def update_test_info(self, test_list):
+        self.test_res_widget.clear()
+        for test in test_list:
+            self.test_res_widget.addItem(QListWidgetItem(f"{test[4]} {'PASSED' if test[0] else 'FAILED'}"))
 
     def show(self) -> None:
         self.update_options()

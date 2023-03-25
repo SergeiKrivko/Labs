@@ -30,6 +30,9 @@ class MainWindow(QMainWindow):
 
         self.code_widget = CodeWidget(self.settings)
         layout.addWidget(self.code_widget)
+        self.testing_widget.testing_signal.connect(self.code_widget.update_test_info)
+        self.code_widget.testing_signal.connect(self.testing_widget.testing)
+        self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
 
         self.menu_bar = MenuBar({
@@ -61,6 +64,13 @@ class MainWindow(QMainWindow):
         self.testing_widget.hide()
         self.tests_widget.hide()
         self.code_widget.show()
+
+    def open_test_from_code(self):
+        index = self.code_widget.test_res_widget.currentRow()
+        self.testing_widget.testing()
+        self.testing_widget.tests_list.setCurrentRow(index)
+        self.testing_widget.open_test_info()
+        self.show_testing()
 
     def closeEvent(self, a0):
         file = open("settings.txt", 'w', encoding="utf-8")
