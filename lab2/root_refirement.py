@@ -1,4 +1,3 @@
-from math import inf
 import math
 
 ERRORS_INFO = {'0': 'Корень найден успешно',
@@ -9,19 +8,17 @@ ERRORS_INFO = {'0': 'Корень найден успешно',
                '5': ''}
 
 
-def binary_search_method(function, a, b, eps, max_iter_count=inf):
+def binary_search_method(function, a, b, eps):
     if function(a) * function(b) > 0:
-        return None, None, None, 0
+        raise ValueError("На отрезке нат корня")
     x = (a + b) / 2
-    iter_count = 0
-    while abs(function(x)) >= eps and iter_count < max_iter_count:
-        iter_count += 1
+    while abs(function(x)) >= eps or (a + b) < eps:
         if function(a) * function(x) > 0:
             a = x
         else:
             b = x
         x = (a + b) / 2
-    return x, function(x), iter_count, None
+    return x
 
 
 def simple_iteration_method(func, der, a, b, eps, max_iter):
