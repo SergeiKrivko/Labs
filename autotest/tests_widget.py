@@ -20,7 +20,7 @@ class TestsWidget(QWidget):
                             'name': OptionsWidget.NAME_LEFT},
             'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
                                'name': OptionsWidget.NAME_LEFT},
-            'Номер варианта:': {'type': int, 'min': 0, 'initial': self.settings.get('var', 0),
+            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
                                 'name': OptionsWidget.NAME_LEFT},
             'Входные данные:': {'type': str, 'initial': '-', 'width': 300},
             'Выходные данные:': {'type': str, 'initial': '-', 'width': 300}
@@ -72,11 +72,16 @@ class TestsWidget(QWidget):
             self.save_tests()
             self.settings['lab'] = self.options_widget["Номер лабы:"]
             self.settings['task'] = self.options_widget["Номер задания:"]
-            for i in range(100):
-                if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                        f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
-                    self.options_widget.set_value('Номер варианта:', i)
-                    break
+            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+                self.options_widget.set_value('Номер варианта:', -1)
+            else:
+                for i in range(100):
+                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                        self.options_widget.set_value('Номер варианта:', i)
+                        break
+            self.settings['var'] = self.options_widget["Номер варианта:"]
             self.open_tests()
         elif key == 'Номер варианта:':
             self.save_tests()
@@ -85,8 +90,10 @@ class TestsWidget(QWidget):
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
-        self.options_widget.set_value('Номер задания:', self.settings.get('task', self.options_widget['Номер задания:']))
-        self.options_widget.set_value('Номер варианта:', self.settings.get('var', self.options_widget['Номер варианта:']))
+        self.options_widget.set_value('Номер задания:',
+                                      self.settings.get('task', self.options_widget['Номер задания:']))
+        self.options_widget.set_value('Номер варианта:',
+                                      self.settings.get('var', self.options_widget['Номер варианта:']))
 
     def add_pos_test(self):
         self.pos_tests.append(['-', '', ''])
@@ -178,10 +185,25 @@ class TestsWidget(QWidget):
             self.settings['path'] = path
             self.open_tests()
 
+    def get_path(self, from_settings=False):
+        if from_settings:
+            if self.settings['var'] == -1:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}"
+            else:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}_" \
+                                                    f"{self.settings['var']:0>2}"
+        elif self.options_widget['Номер варианта:'] == -1:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}"
+        else:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}_" \
+                                                f"{self.options_widget['Номер варианта:']:0>2}"
+
     def open_tests(self):
-        self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                           f"{self.options_widget['Номер задания:']:0>2}_" \
-                                           f"{self.options_widget['Номер варианта:']:0>2}"
+        self.get_path()
         try:
             self.code_widget.setText("")
             file = open(f"{self.path}/main.c")
@@ -248,11 +270,11 @@ class TestsWidget(QWidget):
 
     def generate_test(self, index, type='pos'):
         if not os.path.isfile(f"{self.path}/app.exe"):
-            try:
-                os.system(f"gcc -std=c99 -Wall -Werror -Wvla {self.path}/main.c -o {self.path}/app.exe -lm")
-            except Exception as ex:
-                QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
-                return
+            os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
+                      f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
+            errors = read_file(f"{self.path}/temp.txt")
+            if errors:
+                QMessageBox.warning(self, "Ошибка компиляции", errors)
 
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
@@ -270,8 +292,14 @@ class TestsWidget(QWidget):
                       f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
     def save_tests(self):
+        if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
+            return
         try:
-            os.system(f"gcc -std=c99 -Wall -Werror -Wvla {self.path}/main.c -o {self.path}/app.exe -lm")
+            os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
+                      f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
+            errors = read_file(f"{self.path}/temp.txt")
+            if errors:
+                QMessageBox.warning(self, "Ошибка компиляции", errors)
 
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
             readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8')
@@ -291,7 +319,7 @@ class TestsWidget(QWidget):
                 self.generate_test(i, 'neg')
         except Exception as ex:
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
-        
+
     def show(self):
         self.update_options()
         self.open_tests()
@@ -301,3 +329,10 @@ class TestsWidget(QWidget):
         if not self.isHidden():
             self.save_tests()
         super(TestsWidget, self).hide()
+
+
+def read_file(path):
+    file = open(path, encoding='utf-8')
+    res = file.read()
+    file.close()
+    return res

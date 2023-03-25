@@ -24,7 +24,7 @@ class TestingWidget(QWidget):
                             'name': OptionsWidget.NAME_LEFT},
             'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
                                'name': OptionsWidget.NAME_LEFT},
-            'Номер варианта:': {'type': int, 'min': 0, 'initial': self.settings.get('var', 0),
+            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
                                 'name': OptionsWidget.NAME_LEFT},
             'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
         })
@@ -66,11 +66,16 @@ class TestingWidget(QWidget):
         if key in ('Номер лабы:', 'Номер задания:'):
             self.settings['lab'] = self.options_widget["Номер лабы:"]
             self.settings['task'] = self.options_widget["Номер задания:"]
-            for i in range(100):
-                if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                        f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
-                    self.options_widget.set_value('Номер варианта:', i)
-                    break
+            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+                self.options_widget.set_value('Номер варианта:', -1)
+            else:
+                for i in range(100):
+                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                        self.options_widget.set_value('Номер варианта:', i)
+                        break
+            self.settings['var'] = self.options_widget["Номер варианта:"]
             self.open_task()
         elif key == 'Номер варианта:':
             self.settings['var'] = self.options_widget["Номер варианта:"]
@@ -84,9 +89,7 @@ class TestingWidget(QWidget):
         self.options_widget.set_value('Номер варианта:', self.settings.get('var', self.options_widget['Номер варианта:']))
 
     def open_task(self):
-        self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                           f"{self.options_widget['Номер задания:']:0>2}_" \
-                                           f"{self.options_widget['Номер варианта:']:0>2}"
+        self.get_path()
         try:
             self.code_widget.setText("")
             file = open(f"{self.path}/main.c")
@@ -101,18 +104,33 @@ class TestingWidget(QWidget):
         self.out_data.setText((test_data[2]))
         self.prog_out.setText((test_data[3]))
 
+    def get_path(self, from_settings=False):
+        if from_settings:
+            if self.settings['var'] == -1:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}"
+            else:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}_" \
+                                                    f"{self.settings['var']:0>2}"
+        elif self.options_widget['Номер варианта:'] == -1:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}"
+        else:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}_" \
+                                                f"{self.options_widget['Номер варианта:']:0>2}"
+
     def testing(self):
         if self.isHidden():
-            self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                f"{self.settings['task']:0>2}_" \
-                                                f"{self.settings['var']:0>2}"
+            self.get_path(True)
         self.tests.clear()
         self.tests_list.clear()
-        try:
-            os.system(f"gcc -std=c99 -Wall -Werror -Wvla {self.path}/main.c -o {self.path}/app.exe -lm")
-        except Exception as ex:
-            QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
-            return
+        os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
+                  f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
+        errors = read_file(f"{self.path}/temp.txt")
+        if errors:
+            QMessageBox.warning(self, "Ошибка компиляции", errors)
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):

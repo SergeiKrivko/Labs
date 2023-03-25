@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication, QFi
 
 from code_widget import CodeWidget
 from testing_widget import TestingWidget
+from options_window import OptionsWindow
 from tests_widget import TestsWidget
 from menu_bar import MenuBar
 import json
@@ -35,12 +36,18 @@ class MainWindow(QMainWindow):
         self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
 
+        self.options_window = OptionsWindow({
+            "Компилятор": {'type': str, 'initial': self.settings.get('compiler', 'gcc -std=c99 -Wall -Werror -lm'),
+                           'width': 400}
+        })
+        self.options_window.returnPressed.connect(self.save_settings)
+
         self.menu_bar = MenuBar({
             'Открыть': (self.open_project, None),
             'Код': (self.show_code, None),
             'Тесты': (self.show_tests, None),
             'Тестирование': (self.show_testing, None),
-            'Настройки': (lambda: print('settings'), None)
+            'Настройки': (self.options_window.show, None)
         })
         self.setMenuBar(self.menu_bar)
 
@@ -49,6 +56,9 @@ class MainWindow(QMainWindow):
         if path:
             self.settings['path'] = path
             self.tests_widget.open_tests()
+
+    def save_settings(self, dct):
+        self.settings['compiler'] = dct['Компилятор']
 
     def show_tests(self):
         self.testing_widget.hide()
@@ -67,6 +77,7 @@ class MainWindow(QMainWindow):
 
     def open_test_from_code(self):
         index = self.code_widget.test_res_widget.currentRow()
+        self.testing_widget.get_path(True)
         self.testing_widget.testing()
         self.testing_widget.tests_list.setCurrentRow(index)
         self.testing_widget.open_test_info()
