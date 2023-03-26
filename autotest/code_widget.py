@@ -27,7 +27,7 @@ class CodeWidget(QWidget):
         layout_left.addWidget(self.options_widget)
 
         self.test_res_widget = QListWidget()
-        self.test_res_widget.setMaximumWidth(225)
+        self.test_res_widget.setMaximumWidth(175)
         layout_left.addWidget(self.test_res_widget)
 
         self.code_edit = QTextEdit()
@@ -88,8 +88,8 @@ class CodeWidget(QWidget):
             file = open(f"{self.path}/main.c")
             self.code_edit.setText(file.read())
             file.close()
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        except Exception:
+            pass
 
     def save_code(self):
         code = self.code_edit.toPlainText()
@@ -102,7 +102,7 @@ class CodeWidget(QWidget):
     def update_test_info(self, test_list):
         self.test_res_widget.clear()
         for test in test_list:
-            self.test_res_widget.addItem(QListWidgetItem(f"{test[4]} {'PASSED' if test[0] else 'FAILED'}"))
+            self.test_res_widget.addItem(QListWidgetItem(f"{test[4]} \t{'PASSED' if test[0] else 'FAILED'}"))
 
     def show(self) -> None:
         self.update_options()

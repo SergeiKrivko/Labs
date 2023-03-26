@@ -43,6 +43,10 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_delete_button.clicked.connect(self.delete_pos_test)
         self.test_list_widget.neg_add_button.clicked.connect(self.add_neg_test)
         self.test_list_widget.neg_delete_button.clicked.connect(self.delete_neg_test)
+        self.test_list_widget.pos_button_up.clicked.connect(self.move_pos_test_up)
+        self.test_list_widget.pos_button_down.clicked.connect(self.move_pos_test_down)
+        self.test_list_widget.neg_button_up.clicked.connect(self.move_neg_test_up)
+        self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout2.addWidget(self.test_list_widget)
@@ -161,6 +165,38 @@ class TestsWidget(QWidget):
             self.neg_tests[self.test_list_widget.neg_test_list.currentRow()][2] = \
                 self.test_edit_widget.test_out_edit.toPlainText()
 
+    def move_pos_test_up(self):
+        index = self.test_list_widget.pos_test_list.currentRow()
+        if index == 0:
+            return
+        self.pos_tests[index], self.pos_tests[index - 1] = self.pos_tests[index - 1], self.pos_tests[index]
+        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+        self.test_list_widget.pos_test_list.setCurrentRow(index - 1)
+
+    def move_pos_test_down(self):
+        index = self.test_list_widget.pos_test_list.currentRow()
+        if index >= len(self.pos_tests) - 1:
+            return
+        self.pos_tests[index], self.pos_tests[index + 1] = self.pos_tests[index + 1], self.pos_tests[index]
+        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+        self.test_list_widget.pos_test_list.setCurrentRow(index + 1)
+
+    def move_neg_test_up(self):
+        index = self.test_list_widget.neg_test_list.currentRow()
+        if index == 0:
+            return
+        self.neg_tests[index], self.neg_tests[index - 1] = self.neg_tests[index - 1], self.neg_tests[index]
+        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        self.test_list_widget.neg_test_list.setCurrentRow(index - 1)
+
+    def move_neg_test_down(self):
+        index = self.test_list_widget.neg_test_list.currentRow()
+        if index >= len(self.neg_tests) - 1:
+            return
+        self.neg_tests[index], self.neg_tests[index + 1] = self.neg_tests[index + 1], self.neg_tests[index]
+        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        self.test_list_widget.neg_test_list.setCurrentRow(index + 1)
+
     def button_generate_test(self):
         if self.test_list_widget.pos_test_list.currentItem() is not None:
             index = self.test_list_widget.pos_test_list.currentRow()
@@ -209,8 +245,8 @@ class TestsWidget(QWidget):
             file = open(f"{self.path}/main.c")
             self.code_widget.setText(file.read())
             file.close()
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        except Exception:
+            pass
         self.readme_parser()
         self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
@@ -269,13 +305,6 @@ class TestsWidget(QWidget):
                     file.close()
 
     def generate_test(self, index, type='pos'):
-        if not os.path.isfile(f"{self.path}/app.exe"):
-            os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
-                      f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
-            errors = read_file(f"{self.path}/temp.txt")
-            if errors:
-                QMessageBox.warning(self, "Ошибка компиляции", errors)
-
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
         tests = self.pos_tests if type == 'pos' else self.neg_tests
@@ -283,11 +312,19 @@ class TestsWidget(QWidget):
         file_in.write(tests[index][1])
         file_in.close()
 
-        if tests[index][2].strip():
+        if tests[index][2].strip() or not os.path.isfile(f"{self.path}/main.c"):
             file = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", 'w', encoding='utf-8')
             file.write(tests[index][2])
             file.close()
         else:
+            if not os.path.isfile(f"{self.path}/app.exe"):
+                os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
+                          f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
+                errors = read_file(f"{self.path}/temp.txt")
+                if errors:
+                    QMessageBox.warning(self, "Ошибка компиляции", errors)
+                if os.path.isfile(f"{self.path}/temp.txt"):
+                    os.remove(f"{self.path}/temp.txt")
             os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
                       f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
@@ -295,12 +332,6 @@ class TestsWidget(QWidget):
         if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
             return
         try:
-            os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
-                      f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
-            errors = read_file(f"{self.path}/temp.txt")
-            if errors:
-                QMessageBox.warning(self, "Ошибка компиляции", errors)
-
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
             readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8')
             readme.write(f"# Тесты для лабораторной работы №{self.settings['lab']:0>2}, задания №"

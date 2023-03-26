@@ -16,8 +16,8 @@ class TestingWidget(QWidget):
 
         layout = QHBoxLayout()
         self.setLayout(layout)
-        layout_left = QVBoxLayout()
-        layout.addLayout(layout_left)
+        layout1 = QVBoxLayout()
+        layout.addLayout(layout1)
 
         self.options_widget = OptionsWidget({
             'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
@@ -29,36 +29,41 @@ class TestingWidget(QWidget):
             'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
         })
         self.options_widget.clicked.connect(self.option_changed)
-        layout_left.addWidget(self.options_widget)
+        layout1.addWidget(self.options_widget)
 
         self.code_widget = QTextEdit()
         self.code_widget.setFont(QFont("Courier", 10))
         self.code_widget.setReadOnly(True)
-        layout_left.addWidget(self.code_widget)
+        layout1.addWidget(self.code_widget)
 
-        layout_right = QVBoxLayout()
-        layout.addLayout(layout_right)
-        layout1 = QHBoxLayout()
-        layout_right.addLayout(layout1)
+        layout2 = QVBoxLayout()
+        layout.addLayout(layout2)
 
+        layout2.addWidget(QLabel("Список тестов"))
         self.tests_list = QListWidget()
-        self.tests_list.clicked.connect(self.open_test_info)
-        layout1.addWidget(self.tests_list)
+        self.tests_list.itemSelectionChanged.connect(self.open_test_info)
+        layout2.addWidget(self.tests_list)
 
-        self.prog_out = QTextEdit()
-        self.prog_out.setReadOnly(True)
-        layout1.addWidget(self.prog_out)
-
-        layout2 = QHBoxLayout()
-        layout_right.addLayout(layout2)
-
+        layout2.addWidget(QLabel("Входные данные"))
         self.in_data = QTextEdit()
         self.in_data.setReadOnly(True)
+        self.in_data.setFont(QFont("Courier", 10))
         layout2.addWidget(self.in_data)
 
+        layout3 = QVBoxLayout()
+        layout.addLayout(layout3)
+
+        layout3.addWidget(QLabel("Вывод программы"))
+        self.prog_out = QTextEdit()
+        self.prog_out.setReadOnly(True)
+        self.prog_out.setFont(QFont("Courier", 10))
+        layout3.addWidget(self.prog_out)
+
+        layout3.addWidget(QLabel("Эталонный вывод"))
         self.out_data = QTextEdit()
         self.out_data.setReadOnly(True)
-        layout2.addWidget(self.out_data)
+        self.out_data.setFont(QFont("Courier", 10))
+        layout3.addWidget(self.out_data)
 
         self.tests = []
 
@@ -99,6 +104,9 @@ class TestingWidget(QWidget):
             print(f"{ex.__class__.__name__}: {ex}")
 
     def open_test_info(self):
+        index = self.tests_list.currentRow()
+        if index < 0 or index >= len(self.tests):
+            return
         test_data = self.tests[self.tests_list.currentRow()]
         self.in_data.setText((test_data[1]))
         self.out_data.setText((test_data[2]))
@@ -126,11 +134,14 @@ class TestingWidget(QWidget):
             self.get_path(True)
         self.tests.clear()
         self.tests_list.clear()
-        os.system(f"{self.settings.get('compiler', 'gcc')} {self.path}/main.c -o {self.path}/app.exe"
-                  f"{' -lm' if 'math.h' in read_file(f'{self.path}/main.c') else ''} 2> {self.path}/temp.txt")
+        os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
+                  f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
         errors = read_file(f"{self.path}/temp.txt")
         if errors:
             QMessageBox.warning(self, "Ошибка компиляции", errors)
+            if os.path.isfile(f"{self.path}/temp.txt"):
+                os.remove(f"{self.path}/temp.txt")
+            return
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
@@ -159,6 +170,9 @@ class TestingWidget(QWidget):
                 item = QListWidgetItem(f"neg{i} \tFAILED")
             self.tests_list.addItem(item)
             i += 1
+
+        if os.path.isfile(f"{self.path}/temp.txt"):
+            os.remove(f"{self.path}/temp.txt")
         self.testing_signal.emit(self.tests)
 
     def show(self) -> None:

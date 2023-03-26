@@ -4,6 +4,7 @@ from code_widget import CodeWidget
 from testing_widget import TestingWidget
 from options_window import OptionsWindow
 from tests_widget import TestsWidget
+from git_widget import GitWidget
 from menu_bar import MenuBar
 import json
 import os
@@ -14,6 +15,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.settings = dict() if not os.path.isfile("settings.txt") else \
             json.loads(open('settings.txt', encoding='utf-8').read())
+        if 'compiler' not in self.settings:
+            self.settings['compiler'] = 'gcc'
+        if '-lm' not in self.settings:
+            self.settings['-lm'] = True
 
         self.setWindowTitle("TestGenerator")
         central_widget = QWidget()
@@ -36,9 +41,14 @@ class MainWindow(QMainWindow):
         self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
 
+        self.git_widget = GitWidget(self.settings)
+        layout.addWidget(self.git_widget)
+        self.git_widget.hide()
+
         self.options_window = OptionsWindow({
             "Компилятор": {'type': str, 'initial': self.settings.get('compiler', 'gcc -std=c99 -Wall -Werror -lm'),
-                           'width': 400}
+                           'width': 400},
+            "Ключ -lm": {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT}
         })
         self.options_window.returnPressed.connect(self.save_settings)
 
@@ -47,6 +57,7 @@ class MainWindow(QMainWindow):
             'Код': (self.show_code, None),
             'Тесты': (self.show_tests, None),
             'Тестирование': (self.show_testing, None),
+            'Git': (self.show_git, None),
             'Настройки': (self.options_window.show, None)
         })
         self.setMenuBar(self.menu_bar)
@@ -59,21 +70,31 @@ class MainWindow(QMainWindow):
 
     def save_settings(self, dct):
         self.settings['compiler'] = dct['Компилятор']
+        self.settings['-lm'] = dct['Ключ -lm']
 
     def show_tests(self):
         self.testing_widget.hide()
         self.code_widget.hide()
+        self.git_widget.hide()
         self.tests_widget.show()
 
     def show_testing(self):
         self.tests_widget.hide()
         self.code_widget.hide()
+        self.git_widget.hide()
         self.testing_widget.show()
 
     def show_code(self):
         self.testing_widget.hide()
         self.tests_widget.hide()
+        self.git_widget.hide()
         self.code_widget.show()
+
+    def show_git(self):
+        self.testing_widget.hide()
+        self.tests_widget.hide()
+        self.code_widget.hide()
+        self.git_widget.show()
 
     def open_test_from_code(self):
         index = self.code_widget.test_res_widget.currentRow()

@@ -1,6 +1,9 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel
 
 
+BUTTONS_MAX_WIDTH = 30
+
+
 class TestTableWidget(QWidget):
     def __init__(self):
         super(TestTableWidget, self).__init__()
@@ -15,11 +18,23 @@ class TestTableWidget(QWidget):
 
         self.pos_add_button = QPushButton()
         self.pos_add_button.setText("+")
+        self.pos_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_add_button)
 
         self.pos_delete_button = QPushButton()
-        self.pos_delete_button.setText("X")
+        self.pos_delete_button.setText("✕")
+        self.pos_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_delete_button)
+
+        self.pos_button_up = QPushButton()
+        self.pos_button_up.setText("▲")
+        self.pos_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        pos_buttons_layout.addWidget(self.pos_button_up)
+
+        self.pos_button_down = QPushButton()
+        self.pos_button_down.setText("▼")
+        self.pos_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        pos_buttons_layout.addWidget(self.pos_button_down)
 
         self.pos_test_list = QListWidget()
         pos_layout.addWidget(self.pos_test_list)
@@ -33,11 +48,23 @@ class TestTableWidget(QWidget):
 
         self.neg_add_button = QPushButton()
         self.neg_add_button.setText("+")
+        self.neg_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_add_button)
 
         self.neg_delete_button = QPushButton()
-        self.neg_delete_button.setText("X")
+        self.neg_delete_button.setText("✕")
+        self.neg_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_delete_button)
+
+        self.neg_button_up = QPushButton()
+        self.neg_button_up.setText("▲")
+        self.neg_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        neg_buttons_layout.addWidget(self.neg_button_up)
+
+        self.neg_button_down = QPushButton()
+        self.neg_button_down.setText("▼")
+        self.neg_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        neg_buttons_layout.addWidget(self.neg_button_down)
 
         self.neg_test_list = QListWidget()
         neg_layout.addWidget(self.neg_test_list)
