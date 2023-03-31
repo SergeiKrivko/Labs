@@ -1,7 +1,8 @@
 from PIL import Image
+import struct
 
 
-def encrypt(string, path):
+def encrypt(string: str, path):
     image = Image.open(path)
     size = image.size
     mode = image.mode
@@ -9,14 +10,15 @@ def encrypt(string, path):
     img_bytes = image.tobytes()
     img_bytes = bytearray(img_bytes)
     if len(string) > len(img_bytes) // 3:
-        print("Слишком длинная строка для данного изображения")
         raise OverflowError("Слишком длинная строка для данного изображения")
+
+    string = string.encode('utf-8')
+    string = struct.pack("Q", len(string)) + string
 
     i = 0
     for symbol in string:
-        symbol = ord(symbol)
         for j in range(8):
-            img_bytes[i] = img_bytes[i] // 2 * 2 + symbol % 2
+            img_bytes[i] = (img_bytes[i] >> 1 << 1) + symbol % 2
             symbol //= 2
             i += 1
         i += 1
@@ -31,16 +33,25 @@ def decrypt(path):
     img_bytes = bytearray(img_bytes)
 
     res = bytearray()
-    i = 0
     res_byte = 0
-    for byte in img_bytes:
-        if i == 8:
-            i = 0
-            if 0 <= res_byte < 128:
-                res.append(res_byte)
+    for i in range(72):
+        byte = img_bytes[i]
+        if i % 9 == 8:
+            res.append(res_byte)
             res_byte = 0
         else:
-            res_byte += byte % 2 * 2 ** i
-            i += 1
+            res_byte += (byte % 2) << (i % 9)
 
-    return res.decode('ascii')
+    count = struct.unpack("Q", res)[0]
+
+    res.clear()
+    res_byte = 0
+    for i in range(72, 72 + count * 9):
+        byte = img_bytes[i]
+        if i % 9 == 8:
+            res.append(res_byte)
+            res_byte = 0
+        else:
+            res_byte += (byte % 2) << (i % 9)
+
+    return res.decode('utf-8')

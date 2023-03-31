@@ -38,8 +38,8 @@ class SaveImageWindow(QMainWindow):
         self.show()
 
     def select_file(self):
-        self.file_line_edit.setText(QFileDialog.getSaveFileName(caption="Выберите исходное изображение",
-                                                                filter="Images (*.bmp; *.png; *.jpg)")[0])
+        self.file_line_edit.setText(QFileDialog.getSaveFileName(caption="Сохранение изображения",
+                                                                filter="BMP (*.bmp)\n JPG (*.jpg)\n PNG (*.png)")[0])
 
     def save_image(self):
         self.image.save(self.file_line_edit.text())
