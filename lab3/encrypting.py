@@ -9,7 +9,7 @@ def encrypt(string: str, path):
 
     img_bytes = image.tobytes()
     img_bytes = bytearray(img_bytes)
-    if len(string) > len(img_bytes) // 3:
+    if len(string) > len(img_bytes) // 9:
         raise OverflowError("Слишком длинная строка для данного изображения")
 
     string = string.encode('utf-8')
@@ -30,7 +30,6 @@ def decrypt(path):
     image = Image.open(path)
 
     img_bytes = image.tobytes()
-    img_bytes = bytearray(img_bytes)
 
     res = bytearray()
     res_byte = 0
