@@ -6,11 +6,12 @@ def encrypt(string: str, path):
     image = Image.open(path)
     size = image.size
     mode = image.mode
-
     img_bytes = image.tobytes()
+    del image
     img_bytes = bytearray(img_bytes)
+
     if len(string) > len(img_bytes) // 9:
-        raise OverflowError("Слишком длинная строка для данного изображения")
+        raise OverflowError("too long string for this image")
 
     string = string.encode('utf-8')
     string = struct.pack("Q", len(string)) + string

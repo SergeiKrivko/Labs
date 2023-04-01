@@ -1,13 +1,9 @@
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QLabel, QHBoxLayout, QPushButton, QFileDialog, \
     QMessageBox, QTextEdit
-from PIL import Image
 from encrypting import encrypt
 
 
 class EncryptionWidget(QWidget):
-    save_image = pyqtSignal(Image.Image)
-
     def __init__(self):
         super(EncryptionWidget, self).__init__()
         layout = QVBoxLayout()
@@ -42,6 +38,9 @@ class EncryptionWidget(QWidget):
     def encrypt(self):
         try:
             image = encrypt(self.text_edit.toPlainText(), self.file_line_edit.text())
-            self.save_image.emit(image)
+            path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
+                                               filter="BMP (*.bmp)\n JPG (*.jpg)\n PNG (*.png)")[0]
+            image.save(path)
+
         except Exception as ex:
             QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")

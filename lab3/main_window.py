@@ -31,7 +31,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.decryption_widget)
 
         self.save_file_widget = SaveImageWindow()
-        self.encryption_widget.save_image.connect(self.save_file_widget.open_image)
 
     def change_mode(self, index):
         if index == 0:
