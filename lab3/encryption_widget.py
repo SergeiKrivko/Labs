@@ -36,11 +36,17 @@ class EncryptionWidget(QWidget):
                                                                 filter="Images (*.bmp; *.png)")[0])
 
     def encrypt(self):
-        try:
-            image = encrypt(self.text_edit.toPlainText(), self.file_line_edit.text())
-            path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
-                                               filter="BMP (*.bmp)\n PNG (*.png)")[0]
-            image.save(path)
+        text = self.text_edit.toPlainText()
+        if not text:
+            QMessageBox.warning(self, "Error", "Введите текст для шифрования")
+        elif not self.file_line_edit.text():
+            QMessageBox.warning(self, "Error", "Выберите изображение")
+        else:
+            try:
+                image = encrypt(text, self.file_line_edit.text())
+                path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
+                                                   filter="BMP (*.bmp)\n PNG (*.png)")[0]
+                image.save(path)
 
-        except Exception as ex:
-            QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")
+            except Exception as ex:
+                QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")
