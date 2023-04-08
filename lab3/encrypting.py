@@ -108,7 +108,7 @@ def decrypt(pixels, size, length, pos=(0, 0)):
     i, j = 0, 0
     for i, j in get_all_indexes(size, pos):
         if len(res) >= length:
-            return res, (i, j)
+            break
         if current_step == 0:
             byte = byte | ((pixels[i, j][0] & 1) << 7) | ((pixels[i, j][1] & 1) << 6) | ((pixels[i, j][2] & 1) << 5)
             current_step += 1

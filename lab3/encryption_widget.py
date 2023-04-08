@@ -48,5 +48,7 @@ class EncryptionWidget(QWidget):
                                                    filter="BMP (*.bmp)\n PNG (*.png)")[0]
                 image.save(path)
 
+            except OverflowError:
+                QMessageBox.warning(self, "Ошибка", "Слишком длинная строка для данного изображения")
             except Exception as ex:
-                QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")
+                QMessageBox.warning(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
