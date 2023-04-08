@@ -2,7 +2,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QLabel, QHBoxLayout, QPushButton, QFileDialog, \
     QMessageBox, QTextEdit
 from PIL import Image
-from encrypting import decrypt
+from encrypting import decrypt_image
 
 
 class DecryptionWidget(QWidget):
@@ -42,7 +42,7 @@ class DecryptionWidget(QWidget):
 
     def decrypt(self):
         try:
-            res = decrypt(self.file_line_edit.text())
+            res = decrypt_image(self.file_line_edit.text())
             self.output_line.setText(res)
         except Exception as ex:
             QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")
