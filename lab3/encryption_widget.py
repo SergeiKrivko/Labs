@@ -38,17 +38,18 @@ class EncryptionWidget(QWidget):
     def encrypt(self):
         text = self.text_edit.toPlainText()
         if not text:
-            QMessageBox.warning(self, "Ошибка", "Введите текст для шифрования")
+            QMessageBox.warning(self, "Ошибка", "Введите текст для шифрования.")
         elif not self.file_line_edit.text():
-            QMessageBox.warning(self, "Ошибка", "Выберите изображение")
+            QMessageBox.warning(self, "Ошибка", "Выберите изображение.")
         else:
             try:
-                image = encrypt(text, self.file_line_edit.text())
                 path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
                                                    filter="BMP (*.bmp)\n PNG (*.png)")[0]
-                image.save(path)
+                image = encrypt(text, self.file_line_edit.text(), path)
 
             except OverflowError:
-                QMessageBox.warning(self, "Ошибка", "Слишком длинная строка для данного изображения")
+                QMessageBox.warning(self, "Ошибка", "Слишком длинная строка для данного изображения.")
             except Exception as ex:
                 QMessageBox.warning(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
+
+            QMessageBox.information(self, "Выполнено", "Текст успешно зашифрован.")

@@ -2,7 +2,7 @@ from PIL import Image
 import struct
 
 
-def encrypt(string: str, path):
+def encrypt(string: str, path, new_path):
     image = Image.open(path)
     size = image.size
     if len(string) + 8 > size[0] * size[1] // 3:
@@ -29,9 +29,10 @@ def encrypt(string: str, path):
                 current_step = 0
                 byte_number += 1
                 if byte_number >= len(string):
-                    return image
+                    image.save(new_path)
+                    return
 
-    return image
+    image.save(new_path)
 
 
 def decrypt_image(path):
