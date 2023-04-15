@@ -11,7 +11,7 @@ def encrypt_image(string: str, path):
     pixels = image.load()
 
     string = string.encode('utf-8')
-    string = struct.pack("I", len(string)) + string + "\0".encode()
+    string = struct.pack("I", len(string)) + string
 
     byte_number = 0
     current_step = 0

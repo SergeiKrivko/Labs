@@ -38,9 +38,9 @@ class EncryptionWidget(QWidget):
     def encrypt(self):
         text = self.text_edit.toPlainText()
         if not text:
-            QMessageBox.warning(self, "Error", "Введите текст для шифрования")
+            QMessageBox.warning(self, "Ошибка", "Введите текст для шифрования")
         elif not self.file_line_edit.text():
-            QMessageBox.warning(self, "Error", "Выберите изображение")
+            QMessageBox.warning(self, "Ошибка", "Выберите изображение")
         else:
             try:
                 image = encrypt_image(text, self.file_line_edit.text())
