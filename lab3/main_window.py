@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QComboBox, QVBoxLayout, QWidget
 from encryption_widget import EncryptionWidget
 from decryption_widget import DecryptionWidget
-from save_image_window import SaveImageWindow
 
 
 class MainWindow(QMainWindow):
@@ -29,8 +28,6 @@ class MainWindow(QMainWindow):
         self.decryption_widget = DecryptionWidget()
         self.decryption_widget.hide()
         layout.addWidget(self.decryption_widget)
-
-        self.save_file_widget = SaveImageWindow()
 
     def change_mode(self, index):
         if index == 0:

@@ -45,7 +45,7 @@ class EncryptionWidget(QWidget):
             try:
                 path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
                                                    filter="BMP (*.bmp)\n PNG (*.png)")[0]
-                image = encrypt(text, self.file_line_edit.text(), path)
+                encrypt(text, self.file_line_edit.text(), path)
 
             except OverflowError:
                 QMessageBox.warning(self, "Ошибка", "Слишком длинная строка для данного изображения.")

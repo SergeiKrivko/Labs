@@ -1,13 +1,9 @@
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QLabel, QHBoxLayout, QPushButton, QFileDialog, \
     QMessageBox, QTextEdit
-from PIL import Image
 from encrypting import decrypt_image
 
 
 class DecryptionWidget(QWidget):
-    save_image = pyqtSignal(Image.Image)
-
     def __init__(self):
         super(DecryptionWidget, self).__init__()
         layout = QVBoxLayout()
