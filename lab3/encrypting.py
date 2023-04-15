@@ -2,61 +2,6 @@ from PIL import Image
 import struct
 
 
-def encrypt_old(string: str, path):
-    image = Image.open(path)
-    size = image.size
-    mode = image.mode
-    img_bytes = image.tobytes()
-    del image
-    img_bytes = bytearray(img_bytes)
-
-    if len(string) > len(img_bytes) // 9:
-        raise OverflowError("too long string for this image")
-
-    string = string.encode('utf-8')
-    string = struct.pack("Q", len(string)) + string
-
-    i = 0
-    for symbol in string:
-        for j in range(8):
-            img_bytes[i] = (img_bytes[i] & 254) | symbol % 2
-            symbol //= 2
-            i += 1
-        i += 1
-
-    return Image.frombytes(mode, size, bytes(img_bytes))
-
-
-def decrypt_old(path):
-    image = Image.open(path)
-
-    img_bytes = image.tobytes()
-
-    res = bytearray()
-    res_byte = 0
-    for i in range(72):
-        byte = img_bytes[i]
-        if i % 9 == 8:
-            res.append(res_byte)
-            res_byte = 0
-        else:
-            res_byte |= (byte & 1) << (i % 9)
-
-    count = struct.unpack("Q", res)[0]
-
-    res.clear()
-    res_byte = 0
-    for i in range(72, 72 + count * 9):
-        byte = img_bytes[i]
-        if i % 9 == 8:
-            res.append(res_byte)
-            res_byte = 0
-        else:
-            res_byte |= (byte & 1) << (i % 9)
-
-    return res.decode('utf-8')
-
-
 def encrypt_image(string: str, path):
     image = Image.open(path)
     size = image.size
@@ -66,7 +11,7 @@ def encrypt_image(string: str, path):
     pixels = image.load()
 
     string = string.encode('utf-8')
-    string = struct.pack("Q", len(string)) + string
+    string = struct.pack("I", len(string)) + string + "\0".encode()
 
     byte_number = 0
     current_step = 0
@@ -94,8 +39,8 @@ def decrypt_image(path):
     size = image.size
     pixels = image.load()
 
-    encoded_len, pos = decrypt(pixels, size, 8)
-    length = struct.unpack("Q", encoded_len)[0]
+    encoded_len, pos = decrypt(pixels, size, 4)
+    length = struct.unpack("I", encoded_len)[0]
 
     encoded_str, _ = decrypt(pixels, size, length, pos)
     return encoded_str.decode('utf-8')
