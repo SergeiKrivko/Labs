@@ -44,6 +44,10 @@ class DecryptionWidget(QWidget):
         try:
             res = decrypt_image(self.file_line_edit.text())
             self.output_line.setText(res)
+        except OverflowError:
+            QMessageBox.warning(self, "Ошибка", "Невозможно расшифровать данное изображение")
+        except UnicodeDecodeError:
+            QMessageBox.warning(self, "Ошибка", "Невозможно расшифровать данное изображение")
         except Exception as ex:
-            QMessageBox.warning(self, "Error", f"{ex.__class__.__name__}: {ex}")
+            QMessageBox.warning(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
 

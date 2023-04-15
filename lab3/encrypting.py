@@ -2,7 +2,7 @@ from PIL import Image
 import struct
 
 
-def encrypt_image(string: str, path):
+def encrypt(string: str, path):
     image = Image.open(path)
     size = image.size
     if len(string) + 8 > size[0] * size[1] // 3:
@@ -41,6 +41,9 @@ def decrypt_image(path):
 
     encoded_len, pos = decrypt(pixels, size, 4)
     length = struct.unpack("I", encoded_len)[0]
+
+    if length > size[0] * size[1] - 4:
+        raise OverflowError("Invalid string length")
 
     encoded_str, _ = decrypt(pixels, size, length, pos)
     return encoded_str.decode('utf-8')
