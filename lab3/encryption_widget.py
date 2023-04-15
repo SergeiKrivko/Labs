@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QLabel, QHBoxLayout, QPushButton, QFileDialog, \
     QMessageBox, QTextEdit
-from encrypting import encrypt_image
+from encrypting import encrypt
 
 
 class EncryptionWidget(QWidget):
@@ -43,7 +43,7 @@ class EncryptionWidget(QWidget):
             QMessageBox.warning(self, "Ошибка", "Выберите изображение")
         else:
             try:
-                image = encrypt_image(text, self.file_line_edit.text())
+                image = encrypt(text, self.file_line_edit.text())
                 path = QFileDialog.getSaveFileName(caption="Сохранение изображения",
                                                    filter="BMP (*.bmp)\n PNG (*.png)")[0]
                 image.save(path)
