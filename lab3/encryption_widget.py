@@ -51,5 +51,5 @@ class EncryptionWidget(QWidget):
                 QMessageBox.warning(self, "Ошибка", "Слишком длинная строка для данного изображения.")
             except Exception as ex:
                 QMessageBox.warning(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
-
-            QMessageBox.information(self, "Выполнено", "Текст успешно зашифрован.")
+            else:
+                QMessageBox.information(self, "Выполнено", "Текст успешно зашифрован.")

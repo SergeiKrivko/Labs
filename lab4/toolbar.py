@@ -1,6 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QSpinBox, \
-    QColorDialog, QComboBox
+    QColorDialog, QComboBox, QListWidget, QHBoxLayout, QCheckBox
 from PyQt5.QtGui import QColor
 import angem as ag
 
@@ -9,66 +9,72 @@ INITIAL_COLOR = QColor(0, 0, 0)
 
 class Toolbar(QWidget):
     add_object = pyqtSignal(object)
-    draw_object = pyqtSignal(str)
+    object_modified = pyqtSignal(int, object)
+    delete_object = pyqtSignal(int)
+    clear = pyqtSignal(bool, bool)
 
-    def __init__(self):
+    def __init__(self, objects_list):
         super(Toolbar, self).__init__()
         layout = QVBoxLayout()
         self.setLayout(layout)
-        self.setFixedWidth(150)
+        self.setFixedWidth(200)
         layout.setAlignment(Qt.AlignTop)
 
-        layout.addWidget(QLabel("Режим"))
-        self.mode_combo_box = QComboBox()
-        self.mode_combo_box.addItems(["По координатам", "Мышью"])
-        layout.addWidget(self.mode_combo_box)
-
-        layout.addWidget(QLabel("Рисование"))
+        self.objects = objects_list
 
         self.button_point = QPushButton("Точка")
-        self.button_point.clicked.connect(self.create_point)
+        self.button_point.setCheckable(True)
         layout.addWidget(self.button_point)
 
-        self.button_segment = QPushButton("Отрезок")
-        self.button_segment.clicked.connect(self.create_segment)
-        layout.addWidget(self.button_segment)
+        buttons_layout = QHBoxLayout()
+        layout.addLayout(buttons_layout)
+        buttons_layout.setSpacing(0)
 
-        self.button_line = QPushButton("Прямая")
-        self.button_line.clicked.connect(self.create_line)
-        layout.addWidget(self.button_line)
+        self.button_add = QPushButton("+")
+        buttons_layout.addWidget(self.button_add)
+        self.button_add.clicked.connect(self.create_point)
+
+        self.button_delete = QPushButton("✕")
+        buttons_layout.addWidget(self.button_delete)
+        self.button_delete.clicked.connect(lambda: self.delete_object.emit(self.list_widget.currentRow()))
+
+        self.button_clean = QPushButton("Очистить")
+        buttons_layout.addWidget(self.button_clean)
+        self.button_clean.clicked.connect(lambda: self.clear_objects())
+
+        self.list_widget = QListWidget()
+        self.list_widget.doubleClicked.connect(self.modify_object)
+        layout.addWidget(self.list_widget)
+
+        self.button_get_circle = QPushButton("Построить окружность")
+        layout.addWidget(self.button_get_circle)
+
+    def update_objects_list(self):
+        self.list_widget.clear()
+        for el in self.objects:
+            self.list_widget.addItem(str(el))
 
     def create_point(self):
-        if self.mode_combo_box.currentIndex():
-            self.draw_object.emit('point')
-            return
         self.dlg = CustomDialog("Точка", {"x:": int, "y:": int, 'Цвет': QColor}, INITIAL_COLOR)
         if self.dlg.exec():
             self.add_object.emit(ag.Point(self.dlg.widgets['x:'].value(), self.dlg.widgets['y:'].value(),
                                           self.dlg.color))
 
-    def create_segment(self):
-        if self.mode_combo_box.currentIndex():
-            self.draw_object.emit('segment')
-            return
-        self.dlg = CustomDialog("Отрезок", {"x1:": int, "y1:": int, "x2:": int, "y2:": int, 'Цвет': QColor},
-                                INITIAL_COLOR)
+    def clear_objects(self):
+        self.dlg = CleanObjectsDialog()
         if self.dlg.exec():
-            self.add_object.emit(ag.Segment(ag.Point(
-                self.dlg.widgets['x1:'].value(), self.dlg.widgets['y1:'].value()),
-                ag.Point(self.dlg.widgets['x2:'].value(), self.dlg.widgets['y2:'].value()),
-                self.dlg.color))
+            self.clear.emit(self.dlg.check_box1.isChecked(), self.dlg.check_box2.isChecked())
 
-    def create_line(self):
-        if self.mode_combo_box.currentIndex():
-            self.draw_object.emit('line')
-            return
-        self.dlg = CustomDialog("Прямая", {"x1:": int, "y1:": int, "x2:": int, "y2:": int, 'Цвет': QColor},
-                                INITIAL_COLOR)
-        if self.dlg.exec():
-            self.add_object.emit(ag.Line(ag.Point(
-                self.dlg.widgets['x1:'].value(), self.dlg.widgets['y1:'].value()),
-                ag.Point(self.dlg.widgets['x2:'].value(), self.dlg.widgets['y2:'].value()),
-                self.dlg.color))
+    def modify_object(self):
+        index = self.list_widget.currentRow()
+        if self.list_widget.currentItem().text().startswith("point"):
+            self.dlg = CustomDialog("Точка", {"x:": int, "y:": int, 'Цвет': QColor}, self.objects[index].color)
+            self.dlg.widgets['x:'].setValue(self.objects[index].x)
+            self.dlg.widgets['y:'].setValue(self.objects[index].y)
+            if self.dlg.exec():
+                self.object_modified.emit(self.list_widget.currentRow(),
+                                          ag.Point(self.dlg.widgets['x:'].value(), self.dlg.widgets['y:'].value(),
+                                                   self.dlg.color))
 
 
 class CustomDialog(QDialog):
@@ -95,6 +101,8 @@ class CustomDialog(QDialog):
             elif item == QColor:
                 widget = QPushButton()
                 widget.setFixedWidth(40)
+                widget.setStyleSheet("border: 1px solid #A0A0A0;"
+                                     "border-radius: 4px;")
                 self.connect_color_button(widget)
             else:
                 raise TypeError("Unknown type")
@@ -109,8 +117,41 @@ class CustomDialog(QDialog):
     def connect_color_button(self, widget):
         def triggered():
             color = QColorDialog.getColor(initial=self.color)
-            print(f"color: rgba{color.getRgb()};")
-            widget.setStyleSheet(f"background-color: rgba{color.getRgb()};")
+            widget.setStyleSheet(f"background-color: rgba{color.getRgb()};"
+                                 "border: 1px solid #A0A0A0;"
+                                 "border-radius: 4px;")
             self.color = color
 
         widget.clicked.connect(triggered)
+
+
+class CleanObjectsDialog(QDialog):
+    def __init__(self):
+        super(CleanObjectsDialog, self).__init__()
+        self.setWindowTitle("Очистить")
+        self.setMinimumWidth(240)
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+
+        layout1 = QHBoxLayout()
+        layout1.setAlignment(Qt.AlignLeft)
+        self.check_box1 = QCheckBox()
+        layout1.addWidget(self.check_box1)
+        layout1.addWidget(QLabel("Очистить точки"))
+        layout.addLayout(layout1)
+
+        layout2 = QHBoxLayout()
+        layout2.setAlignment(Qt.AlignLeft)
+        self.check_box2 = QCheckBox()
+        layout2.addWidget(self.check_box2)
+        layout2.addWidget(QLabel("Очистить результат"))
+        layout.addLayout(layout2)
+
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)

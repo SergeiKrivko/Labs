@@ -1,8 +1,7 @@
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen
 import angem as ag
-
 
 POINT_SIZE = 4
 LINE_WIDTH = 1
@@ -10,6 +9,8 @@ POINT_WIDTH = 3
 
 
 class Plot(QWidget):
+    add_point = pyqtSignal(ag.Point)
+
     def __init__(self, objects):
         super(Plot, self).__init__()
 
@@ -28,7 +29,9 @@ class Plot(QWidget):
         self.axis1 = ag.Line(ag.Point(0, 0), ag.Vector(1, 0))
         self.axis2 = ag.Line(ag.Point(0, 0), ag.Vector(0, 1))
 
-        self.move_camera(QPoint(self.height() // 2, self.width() // 2))
+        self.move_camera(QPoint(self.width() // 2, self.height() // 2))
+
+        self.drawing_mode = False
 
     def paintEvent(self, a0):
         self.painter.begin(self)
@@ -51,6 +54,8 @@ class Plot(QWidget):
             self.draw_segment(obj)
         elif isinstance(obj, ag.Line):
             self.draw_line(obj)
+        elif isinstance(obj, ag.Circle):
+            self.draw_circle(obj)
 
     def draw_point(self, point: ag.Point):
         self.set_pen(point.color, POINT_WIDTH)
@@ -73,9 +78,15 @@ class Plot(QWidget):
         self.painter.drawLine(self.x_to_screen(p1.x), self.y_to_screen(p1.y),
                               self.x_to_screen(p2.x), self.y_to_screen(p2.y))
 
+    def draw_circle(self, circle: ag.Circle):
+        self.set_pen(circle.color, LINE_WIDTH)
+        self.painter.drawEllipse(int(self.x_to_screen(circle.center.x) - circle.radius),
+                                 int(self.y_to_screen(circle.center.y) - circle.radius),
+                                 2 * int(circle.radius), 2 * int(circle.radius))
+
     def mousePressEvent(self, a0) -> None:
-        if a0.button() == 1 and self.on_mouse_left:
-            self.on_mouse_left(a0.pos())
+        if a0.button() == 1 and self.drawing_mode:
+            self.add_point.emit(ag.Point(self.x_to_ag(a0.x()), self.y_to_ag(a0.y())))
         elif a0.button() == 2:
             self.moving_camera = True
             self.mouse_pos = a0.pos()
@@ -88,8 +99,9 @@ class Plot(QWidget):
         if self.moving_camera:
             self.move_camera(a0.pos() - self.mouse_pos)
             self.mouse_pos = a0.pos()
-        elif self.on_mouse_move:
-            self.on_mouse_move(a0.pos())
+        if self.drawing_mode:
+            point = ag.Point(self.x_to_ag(a0.x()), self.y_to_ag(a0.y()))
+            self.update(point)
 
     def set_pen(self, color=Qt.red, width=1):
         pen = QPen()
@@ -114,14 +126,13 @@ class Plot(QWidget):
     def y_to_screen(self, y):
         return int(-y + self.y)
 
-    def create_object(self, obj):
-        self.setMouseTracking(True)
-        if obj == 'point':
-            self.create_point()
-        elif obj == 'segment':
-            self.create_segment()
-        elif obj == 'line':
-            self.create_line()
+    def set_drawing_mode(self, mode):
+        self.drawing_mode = mode
+        if self.drawing_mode:
+            self.setMouseTracking(True)
+        else:
+            self.setMouseTracking(False)
+            self.update()
 
     def end_creating_object(self):
         self.setMouseTracking(False)
@@ -144,33 +155,6 @@ class Plot(QWidget):
         if step == 1:
             self.select_point(end_func=lambda pos: self.create_point(2, pos=pos))
         elif step == 2:
-            self.objects.append(ag.Point(self.x_to_ag(kwargs['pos'].x()), self.y_to_ag(kwargs['pos'].y())))
+            self.add_point.emit(ag.Point(self.x_to_ag(kwargs['pos'].x()), self.y_to_ag(kwargs['pos'].y())))
             self.end_creating_object()
 
-    def create_segment(self, step=1, **kwargs):
-        if step == 1:
-            self.select_point(end_func=lambda pos: self.create_segment(2, p1=pos))
-        elif step == 2:
-            p1 = ag.Point(self.x_to_ag(kwargs['p1'].x()), self.y_to_ag(kwargs['p1'].y()))
-            self.select_point(objects=(p1,), object_func=lambda pos: (ag.Segment(p1, ag.Point(
-                self.x_to_ag(pos.x()), self.y_to_ag(pos.y()))),),
-                              end_func=lambda pos: self.create_segment(3, **kwargs, p2=pos))
-        elif step == 3:
-            p1 = ag.Point(self.x_to_ag(kwargs['p1'].x()), self.y_to_ag(kwargs['p1'].y()))
-            p2 = ag.Point(self.x_to_ag(kwargs['p2'].x()), self.y_to_ag(kwargs['p2'].y()))
-            self.objects.append(ag.Segment(p1, p2))
-            self.end_creating_object()
-
-    def create_line(self, step=1, **kwargs):
-        if step == 1:
-            self.select_point(end_func=lambda pos: self.create_line(2, p1=pos))
-        elif step == 2:
-            p1 = ag.Point(self.x_to_ag(kwargs['p1'].x()), self.y_to_ag(kwargs['p1'].y()))
-            self.select_point(objects=(p1,), object_func=lambda pos: (ag.Line(p1, ag.Point(
-                self.x_to_ag(pos.x()), self.y_to_ag(pos.y()))),),
-                              end_func=lambda pos: self.create_line(3, **kwargs, p2=pos))
-        elif step == 3:
-            p1 = ag.Point(self.x_to_ag(kwargs['p1'].x()), self.y_to_ag(kwargs['p1'].y()))
-            p2 = ag.Point(self.x_to_ag(kwargs['p2'].x()), self.y_to_ag(kwargs['p2'].y()))
-            self.objects.append(ag.Line(p1, p2))
-            self.end_creating_object()

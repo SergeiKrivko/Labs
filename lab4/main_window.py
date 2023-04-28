@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
 from plot import Plot
 from toolbar import Toolbar
+import angem as ag
+from logic import get_circle
 
 
 class MainWindow(QMainWindow):
@@ -14,7 +16,7 @@ class MainWindow(QMainWindow):
 
         self.objects = []
 
-        self.toolbar = Toolbar()
+        self.toolbar = Toolbar(self.objects)
         self.toolbar.add_object.connect(self.add_object)
         layout.addWidget(self.toolbar)
 
@@ -27,9 +29,57 @@ class MainWindow(QMainWindow):
         self.plot = Plot(self.objects)
         pb_layout.addWidget(self.plot)
         layout.addWidget(plot_bar)
-        
-        self.toolbar.draw_object.connect(self.plot.create_object)
+        self.plot.add_point.connect(self.add_object)
+
+        self.toolbar.button_point.clicked.connect(self.plot.set_drawing_mode)
+        self.toolbar.delete_object.connect(self.delete_object)
+        self.toolbar.object_modified.connect(self.modify_object)
+        self.toolbar.clear.connect(self.clear_objects)
+
+        self.toolbar.button_get_circle.clicked.connect(self.get_circle)
 
     def add_object(self, obj):
         self.objects.append(obj)
+        self.toolbar.update_objects_list()
         self.plot.update()
+
+    def modify_object(self, index, new_object):
+        self.objects[index] = new_object
+        self.plot.update()
+        self.toolbar.update_objects_list()
+
+    def clear_objects(self, points=False, circles=False):
+        if points and circles:
+            self.objects.clear()
+        else:
+            if points:
+                i = 0
+                while i < len(self.objects):
+                    if isinstance(self.objects[i], ag.Point):
+                        self.objects.pop(i)
+                    else:
+                        i += 1
+            if circles:
+                i = 0
+                while i < len(self.objects):
+                    if isinstance(self.objects[i], ag.Circle):
+                        self.objects.pop(i)
+                    else:
+                        i += 1
+        self.toolbar.update_objects_list()
+
+    def delete_object(self, index):
+        if index < 0:
+            return
+        self.objects.pop(index)
+        self.toolbar.update_objects_list()
+        self.plot.update()
+        self.toolbar.list_widget.setCurrentRow(min(index, self.toolbar.list_widget.count() - 1))
+
+    def get_circle(self):
+        points = []
+        for obj in self.objects:
+            if isinstance(obj, ag.Point):
+                points.append(obj)
+
+        self.add_object(get_circle(points))
