@@ -42,6 +42,10 @@ class Vector:
         return sqrt(self.x ** 2 + self.y ** 2)
 
     def parallel(self, other):
+        if other.x == 0:
+            return self.x == 0
+        if other.y == 0:
+            return self.y == 0
         return abs(self.x / other.x - self.y / other.y) < 1e-10
 
     def angle(self, other):
@@ -80,12 +84,11 @@ class Line:
         if self.vector.parallel(other.vector):
             return None
         if self.vector.y == 0:
-            y = self.vector.y
+            return Point(other.get_x(self.point.y), self.point.y)
         if other.vector.y == 0:
-            y = other.vector.y
-        else:
-            y = (self.vector.x / self.vector.y * self.point.y - other.vector.x / other.vector.y * other.point.y -
-                 self.point.x + other.point.x) / (self.vector.x / self.vector.y - other.vector.x / other.vector.y)
+            return Point(self.get_x(other.point.y), other.point.y)
+        y = (self.vector.x / self.vector.y * self.point.y - other.vector.x / other.vector.y * other.point.y -
+             self.point.x + other.point.x) / (self.vector.x / self.vector.y - other.vector.x / other.vector.y)
         return Point(self.get_x(y), y)
 
     def __str__(self):

@@ -2,12 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
 from plot import Plot
 from toolbar import Toolbar
 import angem as ag
-from logic import get_circle
+from logic import get_circle, Looper
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.looper = None
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QHBoxLayout()
@@ -77,9 +78,16 @@ class MainWindow(QMainWindow):
         self.toolbar.list_widget.setCurrentRow(min(index, self.toolbar.list_widget.count() - 1))
 
     def get_circle(self):
-        points = []
-        for obj in self.objects:
-            if isinstance(obj, ag.Point):
-                points.append(obj)
+        self.clear_objects(circles=True)
+        self.toolbar.set_disabled(True)
+        self.toolbar.progress_mode_on(len(self.objects) * (len(self.objects) - 1) * (len(self.objects) - 2) // 6)
 
-        self.add_object(get_circle(points))
+        self.looper = Looper(self.objects)
+        self.looper.complete.connect(self.calculation_complete)
+        self.looper.step.connect(lambda n: self.toolbar.progress_bar.setValue(self.toolbar.progress_bar.value() + n))
+        self.looper.start()
+
+    def calculation_complete(self, res):
+        if res:
+            self.add_object(res)
+        self.toolbar.progress_mode_off()

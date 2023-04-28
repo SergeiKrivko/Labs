@@ -1,6 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QSpinBox, \
-    QColorDialog, QComboBox, QListWidget, QHBoxLayout, QCheckBox
+    QColorDialog, QComboBox, QListWidget, QHBoxLayout, QCheckBox, QProgressBar
 from PyQt5.QtGui import QColor
 import angem as ag
 
@@ -49,10 +49,33 @@ class Toolbar(QWidget):
         self.button_get_circle = QPushButton("Построить окружность")
         layout.addWidget(self.button_get_circle)
 
+        self.progress_bar = QProgressBar()
+        self.progress_bar.hide()
+        layout.addWidget(self.progress_bar)
+
     def update_objects_list(self):
         self.list_widget.clear()
         for el in self.objects:
             self.list_widget.addItem(str(el))
+
+    def set_disabled(self, flag):
+        self.button_point.setDisabled(flag)
+        self.button_add.setDisabled(flag)
+        self.button_delete.setDisabled(flag)
+        self.button_clean.setDisabled(flag)
+        self.list_widget.setDisabled(flag)
+
+    def progress_mode_on(self, max_value):
+        self.button_get_circle.hide()
+        self.progress_bar.show()
+        self.set_disabled(True)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setMaximum(max_value)
+
+    def progress_mode_off(self):
+        self.progress_bar.hide()
+        self.button_get_circle.show()
+        self.set_disabled(False)
 
     def create_point(self):
         self.dlg = CustomDialog("Точка", {"x:": int, "y:": int, 'Цвет': QColor}, INITIAL_COLOR)
