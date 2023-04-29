@@ -1,5 +1,3 @@
-from PyQt5.QtCore import QThread, pyqtSignal
-
 from angem import Vector, Line, Circle
 
 
@@ -13,8 +11,8 @@ def get_circle(points):
                 if radius > max_radius:
                     max_radius = radius
                     res_center = center
-            yield len(points) - j - 1
-    yield Circle(res_center, max_radius ** 0.5)
+            yield len(points) - j - 1, None
+    yield 0, Circle(res_center, max_radius ** 0.5)
 
 
 def get_3points_center(p1, p2, p3):
@@ -34,20 +32,3 @@ def get_3points_center(p1, p2, p3):
     point = line1.intersection(line2)
     v = Vector(point, p1)
     return point, v * v
-
-
-class Looper(QThread):
-    complete = pyqtSignal(object)
-    step = pyqtSignal(int)
-
-    def __init__(self, points):
-        super(Looper, self).__init__()
-        self.points = points
-
-    def run(self):
-        for el in get_circle(self.points):
-            if isinstance(el, int):
-                self.step.emit(el)
-            else:
-                self.complete.emit(el)
-                return

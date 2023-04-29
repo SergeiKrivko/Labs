@@ -1,8 +1,10 @@
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
 from plot import Plot
 from toolbar import Toolbar
 import angem as ag
-from logic import get_circle, Looper
+from looper import Looper
 
 
 class MainWindow(QMainWindow):
@@ -16,6 +18,7 @@ class MainWindow(QMainWindow):
         self.resize(640, 480)
 
         self.objects = []
+        self.selected_object = -1
 
         self.toolbar = Toolbar(self.objects)
         self.toolbar.add_object.connect(self.add_object)
@@ -31,10 +34,12 @@ class MainWindow(QMainWindow):
         pb_layout.addWidget(self.plot)
         layout.addWidget(plot_bar)
         self.plot.add_point.connect(self.add_object)
+        self.plot.select_object.connect(self.select_object)
 
         self.toolbar.button_point.clicked.connect(self.plot.set_drawing_mode)
         self.toolbar.delete_object.connect(self.delete_object)
         self.toolbar.object_modified.connect(self.modify_object)
+        self.toolbar.select_object.connect(self.select_object)
         self.toolbar.clear.connect(self.clear_objects)
 
         self.toolbar.button_get_circle.clicked.connect(self.get_circle)
@@ -69,13 +74,21 @@ class MainWindow(QMainWindow):
                         i += 1
         self.toolbar.update_objects_list()
 
-    def delete_object(self, index):
+    def delete_object(self, index=None):
+        if index is None:
+            index = self.selected_object
         if index < 0:
             return
         self.objects.pop(index)
         self.toolbar.update_objects_list()
         self.plot.update()
-        self.toolbar.list_widget.setCurrentRow(min(index, self.toolbar.list_widget.count() - 1))
+        self.select_object(min(index, len(self.objects) - 1))
+
+    def select_object(self, index=-1):
+        self.selected_object = index
+        self.plot.selected_object = index
+        self.toolbar.list_widget.setCurrentRow(index)
+        self.plot.update()
 
     def get_circle(self):
         self.clear_objects(circles=True)
@@ -91,3 +104,12 @@ class MainWindow(QMainWindow):
         if res:
             self.add_object(res)
         self.toolbar.progress_mode_off()
+        
+    def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
+        if a0.key() == Qt.Key_Delete:
+            self.delete_object()
+        elif a0.key() == Qt.Key_Escape:
+            self.plot.set_drawing_mode(False)
+            self.toolbar.button_point.setChecked(False)
+        else:
+            super(MainWindow, self).keyPressEvent(a0)

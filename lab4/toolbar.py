@@ -1,6 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QSpinBox, \
-    QColorDialog, QComboBox, QListWidget, QHBoxLayout, QCheckBox, QProgressBar
+    QColorDialog, QListWidget, QHBoxLayout, QCheckBox, QProgressBar
 from PyQt5.QtGui import QColor
 import angem as ag
 
@@ -11,6 +11,7 @@ class Toolbar(QWidget):
     add_object = pyqtSignal(object)
     object_modified = pyqtSignal(int, object)
     delete_object = pyqtSignal(int)
+    select_object = pyqtSignal(int)
     clear = pyqtSignal(bool, bool)
 
     def __init__(self, objects_list):
@@ -38,12 +39,13 @@ class Toolbar(QWidget):
         buttons_layout.addWidget(self.button_delete)
         self.button_delete.clicked.connect(lambda: self.delete_object.emit(self.list_widget.currentRow()))
 
-        self.button_clean = QPushButton("Очистить")
+        self.button_clean = QPushButton("🗑️")
         buttons_layout.addWidget(self.button_clean)
         self.button_clean.clicked.connect(lambda: self.clear_objects())
 
         self.list_widget = QListWidget()
         self.list_widget.doubleClicked.connect(self.modify_object)
+        self.list_widget.currentRowChanged.connect(self.select_object.emit)
         layout.addWidget(self.list_widget)
 
         self.button_get_circle = QPushButton("Построить окружность")
